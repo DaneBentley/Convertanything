@@ -33,7 +33,8 @@ fi
 echo "🚀 Starting Vercel deployment..."
 
 # Deploy to Vercel
-vercel --prod
+echo "Deploying with latest configuration..."
+vercel --prod --force
 
 echo ""
 echo "✅ Deployment complete!"

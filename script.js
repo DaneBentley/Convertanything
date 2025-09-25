@@ -72,12 +72,32 @@ class AudioTranscriber {
     }
 
     initializeApp() {
-        // Initialize with backend API
-        this.apiUrl = 'http://localhost:5000/api';
+        // Initialize with backend API - supports both local and Vercel deployment
+        this.apiUrl = this.getApiUrl();
         console.log('Initializing ConvertAnything with backend API at:', this.apiUrl);
         
         // Test API connection on startup
         this.testApiConnection();
+    }
+    
+    getApiUrl() {
+        // Auto-detect API URL based on environment
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        
+        // If running on Vercel or production domain
+        if (hostname.includes('vercel.app') || (hostname !== 'localhost' && hostname !== '127.0.0.1')) {
+            return `${window.location.protocol}//${hostname}/api`;
+        }
+        
+        // Local development - check if custom port is specified
+        if (port === '8000') {
+            // Frontend on 8000, backend likely on 5000
+            return 'http://localhost:5000/api';
+        }
+        
+        // Default to same origin with /api path
+        return `${window.location.protocol}//${hostname}${port ? ':' + port : ''}/api`;
     }
 
     async testApiConnection() {

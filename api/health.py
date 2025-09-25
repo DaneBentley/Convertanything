@@ -1,14 +1,23 @@
-from http.server import BaseHTTPRequestHandler
 import json
 from datetime import datetime
 
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        
+def handler(request):
+    """Health check endpoint for Vercel"""
+    
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            'body': ''
+        }
+    
+    # Health check response
+    if request.method == 'GET':
         response = {
             'status': 'healthy',
             'message': 'ConvertAnything API is running on Vercel',
@@ -17,11 +26,20 @@ class handler(BaseHTTPRequestHandler):
             'version': '1.0.0'
         }
         
-        self.wfile.write(json.dumps(response).encode())
-        
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps(response)
+        }
+    
+    # Method not allowed
+    return {
+        'statusCode': 405,
+        'headers': {
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({'error': 'Method not allowed'})
+    }

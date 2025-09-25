@@ -1,50 +1,48 @@
-from http.server import BaseHTTPRequestHandler
 import json
 
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        
-        # For serverless deployment, we'll use cloud AI services
-        # These models represent what's available through external APIs
+def handler(request):
+    """Available models endpoint for Vercel"""
+    
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            'body': ''
+        }
+    
+    if request.method == 'GET':
         models = [
-            {
-                'id': 'whisper-1', 
-                'name': 'Whisper-1 (OpenAI)', 
-                'description': 'OpenAI Whisper API - Best accuracy and speed'
-            },
-            {
-                'id': 'base', 
-                'name': 'Base', 
-                'description': 'Balanced performance (fallback mode)'
-            },
-            {
-                'id': 'small', 
-                'name': 'Small', 
-                'description': 'Better accuracy (fallback mode)'
-            },
-            {
-                'id': 'medium', 
-                'name': 'Medium', 
-                'description': 'High accuracy (fallback mode)'
-            }
+            {'id': 'tiny', 'name': 'Tiny', 'description': 'Fastest, lower accuracy (~39 MB)'},
+            {'id': 'base', 'name': 'Base', 'description': 'Recommended balance (~74 MB)'},
+            {'id': 'small', 'name': 'Small', 'description': 'Better accuracy (~244 MB)'},
+            {'id': 'medium', 'name': 'Medium', 'description': 'High accuracy (~769 MB)'},
+            {'id': 'large', 'name': 'Large', 'description': 'Best accuracy (~1550 MB)'}
         ]
         
         response = {
             'models': models,
-            'default': 'whisper-1',
-            'environment': 'vercel_serverless',
-            'note': 'Using cloud AI services for serverless deployment'
+            'default': 'base'
         }
         
-        self.wfile.write(json.dumps(response).encode())
-        
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps(response)
+        }
+    
+    # Method not allowed
+    return {
+        'statusCode': 405,
+        'headers': {
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({'error': 'Method not allowed'})
+    }

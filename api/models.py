@@ -1,7 +1,3 @@
-from flask import Flask, jsonify
-
-app = Flask(__name__)
-
 def handler(request):
     """Get available models endpoint for Vercel"""
     
@@ -31,15 +27,11 @@ def handler(request):
             }
         ]
         
-        return jsonify({
+        return {
             'models': models,
             'default': 'whisper-1',
             'environment': 'vercel_serverless',
             'note': 'Using cloud AI services for serverless deployment'
-        })
+        }
     
-    return jsonify({'error': 'Method not allowed'}), 405
-
-# For local development
-if __name__ == '__main__':
-    app.run(debug=True)
+    return {'error': 'Method not allowed'}, 405

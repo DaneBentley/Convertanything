@@ -1,11 +1,8 @@
-from flask import Flask, request, jsonify
 import os
 import tempfile
 import json
 from datetime import datetime
 import traceback
-
-app = Flask(__name__)
 
 def handler(request):
     """
@@ -16,22 +13,22 @@ def handler(request):
     """
     
     if request.method != 'POST':
-        return jsonify({'error': 'Method not allowed'}), 405
+        return {'error': 'Method not allowed'}, 405
     
     try:
         # Check if file is present
         if 'audio' not in request.files:
-            return jsonify({
+            return {
                 'success': False,
                 'error': 'No audio file provided'
-            }), 400
+            }, 400
         
         file = request.files['audio']
         if file.filename == '':
-            return jsonify({
+            return {
                 'success': False,
                 'error': 'No file selected'
-            }), 400
+            }, 400
         
         # Get parameters
         model_size = request.form.get('model', 'base')
@@ -42,10 +39,10 @@ def handler(request):
         allowed_extensions = {'mp3', 'wav', 'm4a', 'flac', 'ogg', 'mp4'}
         if not ('.' in file.filename and 
                 file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
-            return jsonify({
+            return {
                 'success': False,
                 'error': 'File type not supported'
-            }), 400
+            }, 400
         
         # Check file size (Vercel has limits)
         max_size = int(os.getenv('MAX_FILE_SIZE', '10')) * 1024 * 1024  # Default 10MB
@@ -53,10 +50,10 @@ def handler(request):
         # Read file content to check size
         file_content = file.read()
         if len(file_content) > max_size:
-            return jsonify({
+            return {
                 'success': False,
                 'error': f'File too large for serverless processing. Maximum size: {max_size // (1024*1024)}MB'
-            }), 400
+            }, 400
         
         file.seek(0)  # Reset file pointer after reading
         
@@ -68,7 +65,7 @@ def handler(request):
             # Fallback for demonstration
             result = transcribe_fallback(file, model_size, speaker_separation)
         
-        return jsonify({
+        return {
             'success': True,
             'result': result,
             'metadata': {
@@ -78,15 +75,15 @@ def handler(request):
                 'processed_at': datetime.now().isoformat(),
                 'environment': 'vercel_serverless'
             }
-        })
+        }
         
     except Exception as e:
         print(f"Transcription error: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({
+        return {
             'success': False,
             'error': f'Transcription failed: {str(e)}'
-        }), 500
+        }, 500
 
 def transcribe_with_openai_api(file, model_size, speaker_separation):
     """
@@ -179,6 +176,6 @@ def transcribe_fallback(file, model_size, speaker_separation):
         ]
     }
 
-# For local development
+# For local development testing
 if __name__ == '__main__':
-    app.run(debug=True)
+    print("This is a Vercel serverless function. Deploy to Vercel to test.")

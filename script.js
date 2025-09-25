@@ -90,10 +90,10 @@ class AudioTranscriber {
             return `${window.location.protocol}//${hostname}/api`;
         }
         
-        // Local development - check if custom port is specified
-        if (port === '8000') {
-            // Frontend on 8000, backend likely on 5000
-            return 'http://localhost:5000/api';
+        // For local development, use Vercel backend instead of local server
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            // Use your Vercel deployment for the backend
+            return 'https://cursor-playground-c4hg6011x-danebentley2004-gmailcoms-projects.vercel.app/api';
         }
         
         // Default to same origin with /api path

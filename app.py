@@ -237,7 +237,7 @@ if __name__ == '__main__':
     print("-" * 60)
     
     try:
-        app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
+        app.run(debug=False, host='0.0.0.0', port=5001, threaded=True)
     except KeyboardInterrupt:
         print("\n🛑 Server stopped by user")
     except Exception as e:

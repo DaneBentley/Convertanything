@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConvertAnything - AI Audio Transcription</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-waveform-lines"></i>
+                <h1>ConvertAnything</h1>
+            </div>
+            <p class="subtitle">AI-Powered Audio Transcription with Speaker Separation</p>
+        </header>
+
+        <main class="main">
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h2>Drop your audio file here</h2>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept="audio/*" hidden>
+                    <div class="supported-formats">
+                        <span>Supports: MP3, WAV, M4A, FLAC, OGG</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="options-section" id="optionsSection" style="display: none;">
+                <div class="file-info" id="fileInfo">
+                    <div class="file-details">
+                        <i class="fas fa-file-audio"></i>
+                        <div>
+                            <h3 id="fileName">audio.mp3</h3>
+                            <p id="fileSize">2.4 MB</p>
+                        </div>
+                    </div>
+                    <button class="remove-btn" id="removeFile">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label for="modelSelect">AI Model</label>
+                        <select id="modelSelect">
+                            <option value="base">Base (Recommended)</option>
+                            <option value="tiny">Tiny (Fastest)</option>
+                            <option value="small">Small (Balanced)</option>
+                            <option value="medium">Medium (Better Quality)</option>
+                            <option value="large">Large (Best Quality)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="speakerToggle">Speaker Separation</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="speakerToggle" checked>
+                            <label for="speakerToggle" class="slider"></label>
+                        </div>
+                    </div>
+
+                    <div class="setting-group" id="speakerCountGroup">
+                        <label for="speakerCount">Expected Speakers</label>
+                        <select id="speakerCount">
+                            <option value="2">2 Speakers</option>
+                            <option value="3">3 Speakers</option>
+                            <option value="4">4 Speakers</option>
+                            <option value="5">5+ Speakers</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="transcribe-btn" id="transcribeBtn">
+                    <i class="fas fa-magic"></i>
+                    Start Transcription
+                </button>
+            </div>
+
+            <div class="processing-section" id="processingSection" style="display: none;">
+                <div class="processing-animation">
+                    <div class="wave">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+                <h2>Processing your audio...</h2>
+                <p id="processingStatus">Initializing AI models...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressPercent">0%</span>
+                    <span id="estimatedTime">Estimating time...</span>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2>Transcription Complete</h2>
+                    <div class="results-stats">
+                        <div class="stat">
+                            <span class="stat-label">Duration</span>
+                            <span class="stat-value" id="audioDuration">--</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Speakers</span>
+                            <span class="stat-value" id="speakersDetected">--</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Words</span>
+                            <span class="stat-value" id="wordCount">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transcript-container">
+                    <div class="transcript-tabs">
+                        <button class="tab-btn active" data-tab="formatted">
+                            <i class="fas fa-users"></i>
+                            By Speaker
+                        </button>
+                        <button class="tab-btn" data-tab="timeline">
+                            <i class="fas fa-clock"></i>
+                            Timeline
+                        </button>
+                        <button class="tab-btn" data-tab="raw">
+                            <i class="fas fa-align-left"></i>
+                            Raw Text
+                        </button>
+                    </div>
+
+                    <div class="transcript-content" id="transcriptContent">
+                        <!-- Transcript will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <h3>Export Options</h3>
+                    <div class="export-buttons">
+                        <button class="export-btn" data-format="txt">
+                            <i class="fas fa-file-text"></i>
+                            Text (.txt)
+                        </button>
+                        <button class="export-btn" data-format="json">
+                            <i class="fas fa-file-code"></i>
+                            JSON (.json)
+                        </button>
+                        <button class="export-btn" data-format="csv">
+                            <i class="fas fa-file-csv"></i>
+                            CSV (.csv)
+                        </button>
+                        <button class="export-btn" data-format="srt">
+                            <i class="fas fa-closed-captioning"></i>
+                            Subtitles (.srt)
+                        </button>
+                        <button class="export-btn" data-format="pdf">
+                            <i class="fas fa-file-pdf"></i>
+                            PDF (.pdf)
+                        </button>
+                    </div>
+                </div>
+
+                <button class="new-transcription-btn" id="newTranscriptionBtn">
+                    <i class="fas fa-plus"></i>
+                    New Transcription
+                </button>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 ConvertAnything. Powered by OpenAI Whisper & Pyannote AI.</p>
+            <div class="footer-links">
+                <a href="#privacy">Privacy</a>
+                <a href="#terms">Terms</a>
+                <a href="https://github.com/DaneBentley/Convertanything" target="_blank">
+                    <i class="fab fa-github"></i> Source Code
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Backend API Requirements
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# Audio transcription dependencies
+openai-whisper>=20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+ffmpeg-python>=0.2.0
+
+# Speaker diarization (optional but recommended)
+pyannote.audio>=3.1.0
+speechbrain>=0.5.0
+
+# Additional utilities
+pathlib2>=2.3.7

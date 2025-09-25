@@ -72,9 +72,28 @@ class AudioTranscriber {
     }
 
     initializeDemo() {
-        // Load demo data if no real transcription service is available
-        this.demoMode = true;
-        console.log('Demo mode initialized - using sample transcription data');
+        // Check if backend API is available
+        this.apiUrl = 'http://localhost:5000/api';
+        this.demoMode = false; // Try real API first
+        console.log('Initializing with backend API at:', this.apiUrl);
+        
+        // Test API connection
+        this.testApiConnection();
+    }
+
+    async testApiConnection() {
+        try {
+            const response = await fetch(`${this.apiUrl}/health`);
+            if (response.ok) {
+                console.log('✓ Backend API is available');
+                this.demoMode = false;
+            } else {
+                throw new Error('API not responding');
+            }
+        } catch (error) {
+            console.log('⚠ Backend API not available, falling back to demo mode');
+            this.demoMode = true;
+        }
     }
 
     // File handling methods
@@ -252,31 +271,63 @@ class AudioTranscriber {
     }
 
     async runRealTranscription() {
-        // This would integrate with your Python backend
-        // For now, showing the structure for future implementation
-        
+        // Create form data for API request
         const formData = new FormData();
         formData.append('audio', this.currentFile);
         formData.append('model', this.modelSelect.value);
         formData.append('speaker_separation', this.speakerToggle.checked);
         formData.append('speaker_count', this.speakerCount.value);
 
-        // Example API call structure:
-        /*
-        const response = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error('Transcription service unavailable');
+        try {
+            // Update progress
+            this.updateProgress(5, 'Uploading file to server...');
+            
+            // Make API request
+            const response = await fetch(`${this.apiUrl}/transcribe`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Transcription service unavailable');
+            }
+            
+            this.updateProgress(15, 'Processing with AI models...');
+            
+            // Parse response
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || 'Transcription failed');
+            }
+            
+            // Simulate progress updates while processing
+            await this.simulateProgress();
+            
+            // Set result
+            this.transcriptionResult = data.result;
+            this.updateProgress(100, 'Complete!');
+            
+        } catch (error) {
+            console.error('Real transcription failed:', error);
+            throw error;
         }
-        
-        this.transcriptionResult = await response.json();
-        */
-        
-        // For now, fall back to demo
-        await this.runDemoTranscription();
+    }
+
+    async simulateProgress() {
+        // Simulate processing progress for better UX
+        const steps = [
+            { progress: 30, status: 'Running speech recognition...' },
+            { progress: 60, status: 'Analyzing audio patterns...' },
+            { progress: 80, status: 'Separating speakers...' },
+            { progress: 95, status: 'Finalizing transcription...' }
+        ];
+
+        for (const step of steps) {
+            this.updateProgress(step.progress, step.status);
+            await this.delay(800);
+        }
     }
 
     updateProgress(percent, status) {

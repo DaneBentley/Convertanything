@@ -79,39 +79,39 @@ Simply visit [https://danebentley.github.io/Convertanything](https://danebentley
 3. **Open in browser**:
    Navigate to `http://localhost:8000`
 
-## 🔧 Backend Integration
+## 🔧 Production Setup
 
-The current version runs in demo mode. To integrate with the Python backend:
+**This application is now production-ready!** 🎉
 
-1. **Install Python dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Quick Start
+```bash
+# Install dependencies
+pip install -r requirements-backend.txt
 
-2. **Set up Hugging Face token** (for speaker diarization):
-   ```bash
-   export HF_TOKEN=your_hugging_face_token
-   ```
+# Run the application (starts both backend and frontend)
+python run_local.py
+```
 
-3. **Create API endpoint** (example structure):
-   ```python
-   from flask import Flask, request, jsonify
-   from transcribe_with_speakers import transcribe_with_speakers
-   
-   app = Flask(__name__)
-   
-   @app.route('/api/transcribe', methods=['POST'])
-   def transcribe():
-       audio_file = request.files['audio']
-       model = request.form.get('model', 'base')
-       speaker_separation = request.form.get('speaker_separation') == 'true'
-       
-       result = transcribe_with_speakers(audio_file, model)
-       return jsonify(result)
-   ```
+### Manual Setup
+```bash
+# Terminal 1: Start backend API
+python app.py
 
-4. **Update frontend configuration**:
-   Set `demoMode = false` in `script.js` and configure API endpoints.
+# Terminal 2: Start frontend
+python -m http.server 8000
+
+# Open browser to: http://localhost:8000
+```
+
+### Advanced Configuration
+```bash
+# Optional: Set Hugging Face token for advanced speaker separation
+export HF_TOKEN=your_hugging_face_token
+
+# Get token at: https://huggingface.co/settings/tokens
+```
+
+📖 **For detailed setup instructions, see [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md)**
 
 ## 🎯 Model Options
 

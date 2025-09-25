@@ -9,7 +9,7 @@ class AudioTranscriber {
         
         this.initializeElements();
         this.bindEvents();
-        this.initializeDemo();
+        this.initializeApp();
     }
 
     initializeElements() {
@@ -71,13 +71,12 @@ class AudioTranscriber {
         this.newTranscriptionBtn.addEventListener('click', this.resetApp.bind(this));
     }
 
-    initializeDemo() {
-        // Check if backend API is available
+    initializeApp() {
+        // Initialize with backend API
         this.apiUrl = 'http://localhost:5000/api';
-        this.demoMode = false; // Try real API first
-        console.log('Initializing with backend API at:', this.apiUrl);
+        console.log('Initializing ConvertAnything with backend API at:', this.apiUrl);
         
-        // Test API connection
+        // Test API connection on startup
         this.testApiConnection();
     }
 
@@ -86,13 +85,13 @@ class AudioTranscriber {
             const response = await fetch(`${this.apiUrl}/health`);
             if (response.ok) {
                 console.log('✓ Backend API is available');
-                this.demoMode = false;
+                this.showStatus('Backend connected successfully', 'success');
             } else {
                 throw new Error('API not responding');
             }
         } catch (error) {
-            console.log('⚠ Backend API not available, falling back to demo mode');
-            this.demoMode = true;
+            console.error('❌ Backend API connection failed:', error);
+            this.showError('Backend API not available. Please ensure the Python backend is running on port 5000.');
         }
     }
 
@@ -125,22 +124,39 @@ class AudioTranscriber {
     }
 
     processFile(file) {
+        // Reset any previous error states
+        this.clearErrors();
+        
         // Validate file type
         const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/m4a', 'audio/flac', 'audio/ogg'];
-        if (!validTypes.some(type => file.type.startsWith('audio/'))) {
-            this.showError('Please select a valid audio file (MP3, WAV, M4A, FLAC, OGG)');
+        const validExtensions = ['.mp3', '.wav', '.m4a', '.flac', '.ogg', '.mp4'];
+        
+        const fileName = file.name.toLowerCase();
+        const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+        const hasValidMimeType = validTypes.some(type => file.type.startsWith('audio/') || file.type.startsWith('video/'));
+        
+        if (!hasValidExtension && !hasValidMimeType) {
+            this.showError('Please select a valid audio file. Supported formats: MP3, WAV, M4A, FLAC, OGG');
             return;
         }
 
-        // Validate file size (100MB limit for demo)
-        if (file.size > 100 * 1024 * 1024) {
-            this.showError('File size must be less than 100MB');
+        // Validate file size (100MB limit)
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (file.size > maxSize) {
+            this.showError(`File size must be less than ${Math.round(maxSize / (1024 * 1024))}MB. Your file is ${this.formatFileSize(file.size)}.`);
+            return;
+        }
+        
+        // Check for minimum file size (avoid empty files)
+        if (file.size < 1024) { // 1KB minimum
+            this.showError('File appears to be too small or empty. Please select a valid audio file.');
             return;
         }
 
         this.currentFile = file;
         this.displayFileInfo(file);
         this.showOptionsSection();
+        this.showStatus('File loaded successfully. Configure options and start transcription.', 'success');
     }
 
     displayFileInfo(file) {
@@ -177,6 +193,11 @@ class AudioTranscriber {
         this.optionsSection.style.display = 'none';
         this.processingSection.style.display = 'block';
     }
+    
+    hideProcessingSection() {
+        this.processingSection.style.display = 'none';
+        this.optionsSection.style.display = 'block';
+    }
 
     showResultsSection() {
         this.processingSection.style.display = 'none';
@@ -188,89 +209,65 @@ class AudioTranscriber {
         this.speakerCountGroup.style.display = isEnabled ? 'block' : 'none';
     }
 
+    // Utility methods
+    clearErrors() {
+        // Remove any existing error notifications
+        const errorNotifications = document.querySelectorAll('.notification-error');
+        errorNotifications.forEach(notification => notification.remove());
+        
+        // Clear error states from form elements
+        const errorElements = document.querySelectorAll('.file-input-error, .error');
+        errorElements.forEach(element => {
+            element.classList.remove('file-input-error', 'error');
+        });
+    }
+    
+    validateSettings() {
+        let isValid = true;
+        
+        // Validate model selection
+        if (!this.modelSelect.value) {
+            this.modelSelect.parentElement.classList.add('error');
+            isValid = false;
+        }
+        
+        // Validate speaker count if speaker separation is enabled
+        if (this.speakerToggle.checked && !this.speakerCount.value) {
+            this.speakerCount.parentElement.classList.add('error');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
     // Transcription process
     async startTranscription() {
         if (!this.currentFile || this.isProcessing) return;
+        
+        // Validate settings
+        if (!this.validateSettings()) {
+            this.showError('Please check your settings and try again.');
+            return;
+        }
 
         this.isProcessing = true;
+        this.transcribeBtn.disabled = true;
         this.showProcessingSection();
         
         try {
-            if (this.demoMode) {
-                await this.runDemoTranscription();
-            } else {
-                await this.runRealTranscription();
-            }
+            await this.runTranscription();
         } catch (error) {
+            console.error('Transcription error:', error);
             this.showError('Transcription failed: ' + error.message);
+            // Return to options section on error
+            this.hideProcessingSection();
         } finally {
             this.isProcessing = false;
+            this.transcribeBtn.disabled = false;
         }
     }
 
-    async runDemoTranscription() {
-        const steps = [
-            { status: 'Loading AI models...', progress: 10 },
-            { status: 'Processing audio file...', progress: 30 },
-            { status: 'Running speech recognition...', progress: 60 },
-            { status: 'Separating speakers...', progress: 80 },
-            { status: 'Finalizing transcription...', progress: 95 },
-            { status: 'Complete!', progress: 100 }
-        ];
-
-        for (let i = 0; i < steps.length; i++) {
-            const step = steps[i];
-            this.updateProgress(step.progress, step.status);
-            await this.delay(1500);
-        }
-
-        // Generate demo transcript based on the sample data
-        this.transcriptionResult = this.generateDemoTranscript();
-        this.displayResults();
-    }
-
-    generateDemoTranscript() {
-        // Use the actual Spotify transcript data structure
-        return {
-            text: "This is a demo transcription. In a real implementation, this would contain the full transcribed text from your audio file using OpenAI Whisper AI technology.",
-            duration: 1245, // ~20 minutes
-            language: 'en',
-            segments: [
-                {
-                    start: 0,
-                    end: 4,
-                    text: "Welcome to ConvertAnything, the AI-powered audio transcription service.",
-                    speaker: "Speaker 1"
-                },
-                {
-                    start: 4,
-                    end: 8,
-                    text: "This demo shows how your transcription would appear with speaker separation.",
-                    speaker: "Speaker 2"
-                },
-                {
-                    start: 8,
-                    end: 12,
-                    text: "The system uses OpenAI Whisper for speech recognition and Pyannote for speaker diarization.",
-                    speaker: "Speaker 1"
-                },
-                {
-                    start: 12,
-                    end: 16,
-                    text: "You can export your results in multiple formats including text, JSON, CSV, subtitles, and PDF.",
-                    speaker: "Speaker 2"
-                },
-                {
-                    start: 16,
-                    end: 20,
-                    text: "The interface is designed to be clean, modern, and easy to use for all your transcription needs.",
-                    speaker: "Speaker 1"
-                }
-            ]
-        };
-    }
-
-    async runRealTranscription() {
+    async runTranscription() {
         // Create form data for API request
         const formData = new FormData();
         formData.append('audio', this.currentFile);
@@ -282,15 +279,29 @@ class AudioTranscriber {
             // Update progress
             this.updateProgress(5, 'Uploading file to server...');
             
-            // Make API request
+            // Create abort controller for request timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+            
+            // Make API request with timeout
             const response = await fetch(`${this.apiUrl}/transcribe`, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Transcription service unavailable');
+                let errorMessage = 'Transcription service unavailable';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    // If we can't parse error response, use status text
+                    errorMessage = response.statusText || errorMessage;
+                }
+                throw new Error(errorMessage);
             }
             
             this.updateProgress(15, 'Processing with AI models...');
@@ -302,15 +313,24 @@ class AudioTranscriber {
                 throw new Error(data.error || 'Transcription failed');
             }
             
-            // Simulate progress updates while processing
+            // Simulate progress updates for better UX
             await this.simulateProgress();
             
             // Set result
             this.transcriptionResult = data.result;
             this.updateProgress(100, 'Complete!');
             
+            // Brief delay to show completion
+            await this.delay(500);
+            
+            // Display results
+            this.displayResults();
+            
         } catch (error) {
-            console.error('Real transcription failed:', error);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please try with a smaller file or check your connection.');
+            }
+            console.error('Transcription failed:', error);
             throw error;
         }
     }
@@ -671,7 +691,57 @@ class AudioTranscriber {
     }
 
     showError(message) {
-        alert(message); // In production, use a proper modal/toast
+        // Create a proper error notification
+        this.showNotification(message, 'error');
+        
+        // Also log to console for debugging
+        console.error('ConvertAnything Error:', message);
+    }
+    
+    showStatus(message, type = 'info') {
+        this.showNotification(message, type);
+    }
+    
+    showNotification(message, type = 'info') {
+        // Remove existing notifications
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas ${this.getNotificationIcon(type)}"></i>
+                <span>${message}</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds for non-error notifications
+        if (type !== 'error') {
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    }
+    
+    getNotificationIcon(type) {
+        switch (type) {
+            case 'success': return 'fa-check-circle';
+            case 'error': return 'fa-exclamation-circle';
+            case 'warning': return 'fa-exclamation-triangle';
+            default: return 'fa-info-circle';
+        }
     }
 
     resetApp() {
@@ -697,15 +767,6 @@ document.addEventListener('DOMContentLoaded', () => {
     new AudioTranscriber();
 });
 
-// Service worker registration for PWA capabilities (optional)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('SW registered: ', registration);
-            })
-            .catch(registrationError => {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
+// Production initialization
+console.log('ConvertAnything v1.0 - Production Build');
+console.log('Backend API required on localhost:5000');

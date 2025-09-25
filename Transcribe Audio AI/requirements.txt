@@ -1,0 +1,6 @@
+openai-whisper
+torch
+torchaudio
+ffmpeg-python
+pyannote.audio
+speechbrain

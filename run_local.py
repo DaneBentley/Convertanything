@@ -33,7 +33,9 @@ def check_dependencies():
     print("🔍 Checking dependencies...")
     
     missing_deps = []
+    optional_missing = []
     
+    # Core dependencies
     try:
         import flask
         print("✓ Flask is installed")
@@ -53,18 +55,37 @@ def check_dependencies():
         missing_deps.append("openai-whisper")
     
     try:
+        import torch
+        print("✓ PyTorch is installed")
+    except ImportError:
+        missing_deps.append("torch")
+    
+    # Optional dependencies
+    try:
         from pyannote.audio import Pipeline
         print("✓ Pyannote Audio is installed")
     except ImportError:
+        optional_missing.append("pyannote.audio")
         print("⚠ Pyannote Audio not found (speaker separation will use fallback)")
     
+    try:
+        import ffmpeg
+        print("✓ FFmpeg-python is installed")
+    except ImportError:
+        optional_missing.append("ffmpeg-python")
+        print("⚠ FFmpeg-python not found (audio duration detection may be less accurate)")
+    
     if missing_deps:
-        print(f"\n❌ Missing dependencies: {', '.join(missing_deps)}")
+        print(f"\n❌ Missing critical dependencies: {', '.join(missing_deps)}")
         print("Install with:")
         print(f"pip install {' '.join(missing_deps)}")
         print("\nOr install all dependencies:")
         print("pip install -r requirements-backend.txt")
         return False
+    
+    if optional_missing:
+        print(f"\n⚠ Optional dependencies missing: {', '.join(optional_missing)}")
+        print("For best experience, install with: pip install -r requirements-backend.txt")
     
     print("✅ All core dependencies are installed!")
     return True

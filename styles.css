@@ -728,3 +728,126 @@ input:focus-visible {
 .transcript-content::-webkit-scrollbar-thumb:hover {
     background: var(--border-hover);
 }
+
+/* Notification System */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    min-width: 300px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-xl);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.notification-info .notification-content {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification-success .notification-content {
+    background: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid var(--success);
+}
+
+.notification-warning .notification-content {
+    background: #fef3c7;
+    color: #92400e;
+    border-left: 4px solid var(--warning);
+}
+
+.notification-error .notification-content {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid var(--error);
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    margin-left: auto;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.notification-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading states */
+.upload-area.processing {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.transcribe-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Enhanced error states */
+.file-input-error {
+    border-color: var(--error) !important;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.setting-group.error select {
+    border-color: var(--error);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* Connection status indicator */
+.connection-status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+    z-index: 999;
+}
+
+.connection-status.connected {
+    background: var(--success);
+    color: white;
+}
+
+.connection-status.disconnected {
+    background: var(--error);
+    color: white;
+}
+
+.connection-status.connecting {
+    background: var(--warning);
+    color: white;
+}

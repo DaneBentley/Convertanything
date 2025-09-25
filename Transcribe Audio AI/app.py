@@ -188,58 +188,28 @@ def internal_error(e):
     return jsonify({'error': 'Internal server error. Please try again.'}), 500
 
 if __name__ == '__main__':
-    print("=" * 60)
-    print("🎵 ConvertAnything API Server v1.0")
-    print("=" * 60)
+    print("Starting ConvertAnything API server...")
     print("Available endpoints:")
     print("  GET  /api/health - Health check")
     print("  POST /api/transcribe - Transcribe audio file")
     print("  GET  /api/models - Available models")
     print()
-    print("Frontend URL: http://localhost:8000 (serve with: python -m http.server 8000)")
-    print("Backend API: http://localhost:5000")
+    print("Frontend should be served separately (e.g., with 'python -m http.server')")
+    print("Make sure to install dependencies: pip install flask flask-cors")
     print()
     
     # Check if required modules are available
-    missing_deps = []
     try:
         import whisper
         print("✓ OpenAI Whisper is available")
     except ImportError:
         print("✗ OpenAI Whisper not found. Install with: pip install openai-whisper")
-        missing_deps.append("openai-whisper")
     
     try:
         from pyannote.audio import Pipeline
         print("✓ Pyannote Audio is available")
     except ImportError:
-        print("⚠ Pyannote Audio not found. Speaker separation will use fallback mode.")
-        print("  Install with: pip install pyannote.audio")
+        print("✗ Pyannote Audio not found. Install with: pip install pyannote.audio")
     
-    try:
-        import torch
-        print("✓ PyTorch is available")
-    except ImportError:
-        print("✗ PyTorch not found. Install with: pip install torch")
-        missing_deps.append("torch")
-    
-    if missing_deps:
-        print(f"\n❌ Critical dependencies missing: {', '.join(missing_deps)}")
-        print("Install all dependencies with: pip install -r requirements-backend.txt")
-        print("Exiting...")
-        exit(1)
-    
-    print("\n🚀 All dependencies satisfied!")
-    print("🌐 Starting server on http://localhost:5000")
-    print("📝 Set HF_TOKEN environment variable for best speaker separation results")
-    print("   Get token at: https://huggingface.co/settings/tokens")
-    print("\nPress Ctrl+C to stop the server")
-    print("-" * 60)
-    
-    try:
-        app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
-    except KeyboardInterrupt:
-        print("\n🛑 Server stopped by user")
-    except Exception as e:
-        print(f"\n❌ Server error: {e}")
-        exit(1)
+    print("\nStarting server on http://localhost:5000")
+    app.run(debug=True, host='0.0.0.0', port=5000)
